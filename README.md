@@ -5,7 +5,7 @@
 - api functions : CRUD 기능을 하는 apis. (기본 url이 "/api"이면 좋습니다.)
 예시: "/api/stopwatch" - stopwatch 기능을 담당하는 api.
 
-2. app.py 폴더 구분하기
+2. app.py 폴더 구분하기 (옵션입니다 필수 아닙니다!)
 예시:
 
 ```py
@@ -115,7 +115,7 @@ $(document).ready(function() {
 
 백엔드쪽 로직
 ```py
-from flask import Flask, request, jsonify, make_response
+from flask import Flask, request, jsonify
 import jwt
 import datetime
 
@@ -123,8 +123,7 @@ app = Flask(__name__)
 
 app.config['SECRET_KEY'] = 'mysecretkey'
 
-# 데이터 배이스 목데이터 (이미 해싱기능을 구현하셨기 때문에 디코딩 해주시면 더
-됩니다)
+# Dummy user data for this example
 users = {
     'john': 'password123',
     'jane': 'qwerty456',
@@ -134,17 +133,13 @@ users = {
 # Login route
 @app.route('/api/login', methods=['POST'])
 def login():
-    auth = request.authorization
-    if not auth or not auth.username or not auth.password:
-        return make_response('Could not verify', 401, {'WWW-Authenticate': 'Basic realm="Login Required"'})
-    
-    username = auth.username
-    password = auth.password
+    username = request.form.get('username')
+    password = request.form.get('password')
     
     if username not in users or users[username] != password:
-        return make_response('Could not verify', 401, {'WWW-Authenticate': 'Basic realm="Login Required"'})
+        return jsonify({'message': 'Invalid credentials'})
     
-    # JWT token 생성
+    # Generate JWT token
     token = jwt.encode({'user': username, 'exp': datetime.datetime.utcnow() + datetime.timedelta(minutes=30)}, app.config['SECRET_KEY'])
     
     return jsonify({'token': token})
@@ -158,11 +153,10 @@ def test_token():
         data = jwt.decode(token, app.config['SECRET_KEY'], algorithms=['HS256'])
         return jsonify({'message': 'Token is valid', 'user': data['user']})
     except jwt.ExpiredSignatureError:
-        return make_response('Token has expired', 401, {'WWW-Authenticate': 'Basic realm="Login Required"'})
+        return jsonify({'message': 'Token has expired'}), 401
     except jwt.InvalidTokenError:
-        return make_response('Invalid token', 401, {'WWW-Authenticate': 'Basic realm="Login Required"'})
+        return jsonify({'message': 'Invalid token'}), 401
 
 if __name__ == '__main__':
     app.run(debug=True)
-
 ```
