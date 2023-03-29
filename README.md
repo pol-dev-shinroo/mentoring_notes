@@ -123,7 +123,7 @@ app = Flask(__name__)
 
 app.config['SECRET_KEY'] = 'mysecretkey'
 
-# Dummy user data for this example
+# 데이터 베이스 목데이터입니다. 해싱 구현하신거 적용하면 됩니다!
 users = {
     'john': 'password123',
     'jane': 'qwerty456',
